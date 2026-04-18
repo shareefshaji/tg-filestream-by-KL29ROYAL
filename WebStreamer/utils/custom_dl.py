@@ -17,7 +17,7 @@ class ByteStreamer:
         asyncio.create_task(self.clean_cache())
 
     async def get_file_properties(self, db_id: str, multi_clients) -> FileId:
-        if not db_id in self.cached_file_ids:
+        if db_id not in self.cached_file_ids:
             logging.debug("Before Calling generate_file_properties")
             await self.generate_file_properties(db_id, multi_clients)
             logging.debug("Cached file properties for file with ID %s", db_id)
@@ -32,8 +32,6 @@ class ByteStreamer:
         return self.cached_file_ids[db_id]
 
     async def generate_media_session(self, client: Client, file_id: FileId) -> Session:
-
-
         media_session = client.media_sessions.get(file_id.dc_id, None)
 
         if media_session is None:
@@ -57,7 +55,8 @@ class ByteStreamer:
                     try:
                         await media_session.invoke(
                             raw.functions.auth.ImportAuthorization(
-                                id=exported_auth.id, bytes=exported_auth.bytes
+                                id=exported_auth.id,
+                                bytes=exported_auth.bytes
                             )
                         )
                         break
@@ -79,23 +78,29 @@ class ByteStreamer:
                     is_media=True,
                 )
                 await media_session.start()
+
             logging.debug("Created media session for DC %s", file_id.dc_id)
             client.media_sessions[file_id.dc_id] = media_session
         else:
             logging.debug("Using cached media session for DC %s", file_id.dc_id)
+
         return media_session
 
-
     @staticmethod
-    async def get_location(file_id: FileId) -> Union[raw.types.InputPhotoFileLocation,
-                                                     raw.types.InputDocumentFileLocation,
-                                                     raw.types.InputPeerPhotoFileLocation,]:
-       file_type = file_id.file_type
+    async def get_location(
+        file_id: FileId
+    ) -> Union[
+        raw.types.InputPhotoFileLocation,
+        raw.types.InputDocumentFileLocation,
+        raw.types.InputPeerPhotoFileLocation,
+    ]:
+        file_type = file_id.file_type
 
         if file_type == FileType.CHAT_PHOTO:
             if file_id.chat_id > 0:
                 peer = raw.types.InputPeerUser(
-                    user_id=file_id.chat_id, access_hash=file_id.chat_access_hash
+                    user_id=file_id.chat_id,
+                    access_hash=file_id.chat_access_hash
                 )
             else:
                 if file_id.chat_access_hash == 0:
@@ -111,6 +116,7 @@ class ByteStreamer:
                 photo_id=file_id.media_id,
                 big=file_id.thumbnail_source == ThumbnailSource.CHAT_PHOTO_BIG
             )
+
         elif file_type == FileType.PHOTO:
             location = raw.types.InputPhotoFileLocation(
                 id=file_id.media_id,
@@ -118,6 +124,7 @@ class ByteStreamer:
                 file_reference=file_id.file_reference,
                 thumb_size=file_id.thumbnail_size,
             )
+
         else:
             location = raw.types.InputDocumentFileLocation(
                 id=file_id.media_id,
@@ -125,6 +132,7 @@ class ByteStreamer:
                 file_reference=file_id.file_reference,
                 thumb_size=file_id.thumbnail_size,
             )
+
         return location
 
     async def yield_file(
@@ -137,24 +145,28 @@ class ByteStreamer:
         part_count: int,
         chunk_size: int,
     ) -> AsyncGenerator[bytes, None]:
-      client = self.client
+        client = self.client
         work_loads[index] += 1
+
         logging.debug("Starting to yielding file with client %s.", index)
         media_session = await self.generate_media_session(client, file_id)
 
         current_part = 1
-
         location = await self.get_location(file_id)
 
         try:
             r = await media_session.invoke(
                 raw.functions.upload.GetFile(
-                    location=location, offset=offset, limit=chunk_size
+                    location=location,
+                    offset=offset,
+                    limit=chunk_size
                 ),
             )
+
             if isinstance(r, raw.types.upload.File):
                 while True:
                     chunk = r.bytes
+
                     if not chunk:
                         break
                     elif part_count == 1:
@@ -174,20 +186,23 @@ class ByteStreamer:
 
                     r = await media_session.invoke(
                         raw.functions.upload.GetFile(
-                            location=location, offset=offset, limit=chunk_size
+                            location=location,
+                            offset=offset,
+                            limit=chunk_size
                         ),
                     )
+
         except (TimeoutError, AttributeError):
             pass
+
         finally:
-            logging.debug("Finished yielding file with %s parts.", current_part)
+            logging.debug(
+                "Finished yielding file with %s parts.",
+                current_part
+            )
             work_loads[index] -= 1
 
-
     async def clean_cache(self) -> None:
-        """
-        function to clean the cache to reduce memory usage
-        """
         while True:
             await asyncio.sleep(self.clean_timer)
             self.cached_file_ids.clear()

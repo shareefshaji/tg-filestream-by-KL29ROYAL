@@ -1,0 +1,81 @@
+{
+    "name": "KL29 Royal Stream Bot",
+    "description": "Telegram File Streaming Bot - Stream & generate direct links for Telegram files.",
+    "repository": "https://github.com/shareefshaji/tg-filestream-by-KL29ROYAL",
+    "website": "https://github.com/shareefshaji/tg-filestream-by-KL29ROYAL",
+    "env": {
+        "API_ID": {
+            "description": "Get from https://my.telegram.org"
+        },
+        "API_HASH": {
+            "description": "Get from https://my.telegram.org"
+        },
+        "BOT_TOKEN": {
+            "description": "Get from @BotFather on Telegram"
+        },
+        "OWNER_ID": {
+            "description": "Your Telegram User ID (not username)"
+        },
+        "BIN_CHANNEL": {
+            "description": "Channel ID where files are stored. Bot must be admin."
+        },
+        "DATABASE_URL": {
+            "description": "MongoDB URI e.g. mongodb+srv://user:pass@cluster.mongodb.net/db"
+        },
+        "FQDN": {
+            "description": "Your app domain after deploying e.g. myapp.railway.app",
+            "required": false
+        },
+        "HAS_SSL": {
+            "description": "Set True if your domain uses HTTPS",
+            "value": "True"
+        },
+        "NO_PORT": {
+            "description": "Set True to hide port from links",
+            "value": "True",
+            "required": false
+        },
+        "UPDATES_CHANNEL": {
+            "description": "Your Telegram channel username without @",
+            "required": false
+        },
+        "FORCE_UPDATES_CHANNEL": {
+            "description": "Set True to force users to join channel before using bot",
+            "required": false
+        },
+        "SESSION_NAME": {
+            "description": "MongoDB database name. Default: F2LxBot",
+            "required": false
+        },
+        "KEEP_ALIVE": {
+            "description": "Ping server to prevent sleeping on free tiers",
+            "value": "True",
+            "required": false
+        },
+        "WORKERS": {
+            "description": "Number of bot workers. Default: 6",
+            "required": false
+        },
+        "SLEEP_THRESHOLD": {
+            "description": "Flood wait sleep time in seconds. Default: 60",
+            "required": false
+        },
+        "LINK_LIMIT": {
+            "description": "Max links a user can generate. Leave empty for unlimited.",
+            "required": false
+        },
+        "TOS": {
+            "description": "URL to your Terms of Service text file",
+            "required": false
+        }
+    },
+    "buildpacks": [{
+        "url": "heroku/python"
+    }],
+    "formation": {
+        "web": {
+            "quantity": 1,
+            "size": "Eco"
+        }
+    }
+}

@@ -1,0 +1,7 @@
+aiohttp
+kurigram
+python-dotenv
+tgcrypto
+motor
+aiofiles
+dnspython
